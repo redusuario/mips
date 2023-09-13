@@ -14,19 +14,19 @@ module IF_pc
 
     //INTERNAL
     //reg [NB_ADDR - 1:0] pc_reg=0, pc_next=0; // la direccion inicial en 0
-    reg [NB_ADDR - 1:0] pc_reg; 
-    reg [NB_ADDR - 1:0] pc_next;
+    reg [NB_ADDR - 1:0] pc_reg=0; 
+    reg [NB_ADDR - 1:0] pc_next=0;
 
     always@(posedge i_clk)
     begin
         if (i_reset)
-           pc_reg<={NB_ADDR{1'b0}};
+            pc_reg<={NB_ADDR{1'b0}};
         else if (i_enable)   
             pc_reg<=pc_next;
     end
     
     always @(*)
-        pc_next = i_pc;
+        pc_next = i_pc;//
         
 
     //OUTPUT

@@ -16,7 +16,7 @@ module IF #(
 	input  		wire 	[NB_ADDR - 1:0]     i_address,
 	output 		wire 	[NB_INST - 1:0]     o_instruction,
 
-	output 		wire 	[NB_ADDR - 1:0]	   o_pc 
+	output 		wire 	[NB_ADDR - 1:0]	   	o_pc 
 );
 
 wire 	[NB_ADDR - 1:0] 	pc;

@@ -42,7 +42,7 @@ module tb_IF();
     wire [NB_INST- 1:0]             o_instruction;
     wire [NB_ADDR - 1:0]            o_pc;
 
-IF u_memoria_instrucciones
+IF u_IF
 (
     .i_clk(i_clk),
     .i_enable(i_enable),

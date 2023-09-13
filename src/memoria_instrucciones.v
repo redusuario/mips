@@ -48,7 +48,14 @@ module IF_memoria_instrucciones
 	
   	//OUTPUT
     //read operation 
-  	assign o_instruction = (i_write) ? memory[i_pc] : memory[i_address]; // El dato se lee al instante y se asigna a la salida
-  	                                             // De igual modo cuando se escribe se disponibiliza
+  	//assign o_instruction = (i_write) ? memory[i_pc] : memory[i_address];
+    //assign o_instruction = (i_write) ? memory[i_address] : memory[i_pc];
+    assign o_instruction = memory[i_pc];
+
+
+
+
+    // El dato se lee al instante y se asigna a la salida
+  	// De igual modo cuando se escribe se disponibiliza
 
 endmodule
