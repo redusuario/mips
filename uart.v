@@ -23,56 +23,64 @@ module uart
 		input	wire 			clk, reset,
 		input 	wire 			rx,
 		output  wire 	[7:0] 	tx_fifo_out,
-		output 	wire 			tx_full, tx,
+		output 	wire 			 tx,
 	    input   wire            wr_uart,
-		output  wire     [7:0] 	rx_data_out          
+		output  wire     [7:0] 	rx_data_out   
 	);
 
 	// signal declaration
-	wire 			tick, rx_done_tick, tx_done_tick;
-	//wire 			wr_uart;
-    //wire 	[7:0] 	tx_fifo_out;  //como output para mostrar en los leds
-    wire            tx_fifo_not_empt;
-    wire 			tx_empty;
-    wire   [7:0]    data;
-
+	wire       [7:0]     rx_data;
+	wire 			tick, rx_done_tick, tx_done_tick, ready_instruc;
+    wire            empty;
+    //wire               [7:0]     parte;
+    wire     [31:0] 	registro;
+    wire               done;             
 	//body
 	mod_m_counter #(.M(DVSR), .N(DVSR_BIT)) baud_gen_unit
 		( .clk(clk), .reset(reset), .q(), .max_tick(tick));
 
 	uart_rx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_rx_unit
 		( .clk(clk), .reset(reset), .rx(rx), .s_tick(tick),
-		.rx_done_tick(rx_done_tick), .dout(rx_data_out));
+		.rx_done_tick(rx_done_tick), .dout(rx_data));
 
-  //TX		 
-	fifo #(.B(DBIT), .W(FIFO_W)) fifo_tx_unit
-		(.clk(clk), .reset(reset), .rd(tx_done_tick),
-		.wr(wr_uart), .w_data(data), .empty(tx_empty),
-		.full(tx_full), .r_data(tx_fifo_out));
-
-	uart_tx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_tx_unit
-		( .clk(clk), .reset(reset), .tx_start(tx_fifo_not_empty), 
+  	uart_tx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_tx_unit
+		( .clk(clk), .reset(reset), .tx_start(empty), 
 		.s_tick(tick), .din(tx_fifo_out),
 		.tx_done_tick(tx_done_tick), .tx(tx));	
 
-	
-  interfaz
-    #(
-        .NB_DATA        (NB_DATA),
-        .NB_CODE        (NB_CODE),
-        .NB_STATE       (NB_STATE)
-    )
-    u_interfaz
-    (
-        .i_clk          (clk),
-        .i_reset        (reset),
-        .i_rx_done		(rx_done_tick),                        
-    	.i_data			(rx_data_out), 
-        .o_data         (data)
-        //.o_data_ready    (wr_uart)
-    );
     
-    assign tx_fifo_not_empty = ~tx_empty;
+    make_instruc
+    #(
+    )
+    u_make_instruc
+    (
+        .i_clk                (clk),              
+        .i_reset              (reset),            
+        .entrada        (rx_data),
+        .i_rx_done        (rx_done_tick),
+        .ready_instruc     (ready_instruc),       
+        .o_registro              (registro),
+        .test                    (rx_data_out)      
+
+  );
+  
+      instruc_buffer
+    #(
+    )
+    u_instruc_buffer
+    (
+        .clk                (clk),              
+        .reset              (reset), 
+        .done                 (done),
+        .wr                  (wr_uart),
+        .enviar             (ready_instruc),
+        .tx_done_tick       (tx_done_tick),     
+        .entrada             (registro), 
+        .parte                (tx_fifo_out),
+        .empty               (empty)           
+
+  );
+
 
 //mapear clk,reset,rx input, rd_uart = ? input pulsador, rx_empty = debug, r_data = 7 leds
 
