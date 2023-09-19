@@ -20,6 +20,7 @@ module ID #(
 
     input wire   [NB_ADDR-1:0]              i_pc,
     input wire   [NB_INST-1:0]              i_instruction,
+
 	output wire  [NB_FUNCT-1:0]      		o_funct,
 	output wire  [NB_INST-1:0]       		o_instruction,
     output wire  [NB_ADDR-1:0]              o_pc,
@@ -27,7 +28,11 @@ module ID #(
     output wire [NB_DATA-1:0]             	o_data_1,
     output wire [NB_DATA-1:0]             	o_data_2,
 
-    output wire [NB_INST-1:0]              o_sign_extend
+    output wire [NB_INST-1:0]               o_sign_extend,
+
+    output wire                             o_signal_control_mult_A,
+    output wire                             o_signal_control_mult_B
+
 
 );
 
@@ -68,6 +73,15 @@ ID_sign_extend u_sign_extend(
     .i_opcode(opcode),
     .o_sign_extend(o_sign_extend)
 );
+
+
+ID_control u_control
+(
+    .i_opcode(opcode),
+    .o_signal_control_mult_A(o_signal_control_mult_A),
+    .o_signal_control_mult_B(o_signal_control_mult_B)
+);
+
 
 
 endmodule

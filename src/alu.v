@@ -1,7 +1,7 @@
 // Code your design here
 `timescale 1ns / 1ps
 
-module IE_alu 
+module EX_alu 
 #(
     parameter NB_OP = 6,  
     parameter NB_DATA = 32,
