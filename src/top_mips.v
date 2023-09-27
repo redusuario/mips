@@ -22,26 +22,33 @@ module top_mips #(
 	// IF - INPUT
 	//----------------------------------------------------
 
-	input 		wire 						i_clk,////////////////////////////////////////////////////////
-	input 		wire 						i_enable,/////////////////////////////////////////////////////
-	input 		wire 						i_reset,//////////////////////////////////////////////////////
-	input 		wire 	[NB_ADDR - 1:0] 	i_pc,/////////////////////////////////////////////////////////
-	input  		wire                        i_write,//////////////////////////////////////////////////////
-	input  		wire 	[NB_INST - 1:0]     i_instruction,////////////////////////////////////////////////
-	input  		wire 	[NB_ADDR - 1:0]     i_address,////////////////////////////////////////////////////
+	input 		wire 						i_clk,
+	input 		wire 						i_enable,
+	input 		wire 						i_reset,
+	input 		wire 	[NB_ADDR - 1:0] 	i_pc,
+	input  		wire                        i_write,
+	input  		wire 	[NB_INST - 1:0]     i_instruction,
+	input  		wire 	[NB_ADDR - 1:0]     i_address,
 
 	//----------------------------------------------------
 	// ID - INPUT
 	//----------------------------------------------------
 
-    input wire  [NB_DATA-1:0]             	i_data_input,/////////////////////////////////////////////////
-    input wire  [NB_REG-1:0]              	i_address_data,///////////////////////////////////////////////
-    input wire                            	i_id_write,///////////////////////////////////////////////////
-
-
+    input wire  [NB_REG-1:0]              	i_address_data,
+    input wire                            	i_write_debug_reg_file,
+    //input wire 								i_write_data,
+    input wire  [NB_REG-1:0]                i_address_read_debug,
+    input wire  [NB_REG-1:0]                i_address_write_debug,
+    input wire  [NB_DATA-1:0]               i_write_data_debug,
 	//----------------------------------------------------
 	// EX - INPUT
 	//----------------------------------------------------
+
+	//----------------------------------------------------
+	// WB - INPUT
+	//----------------------------------------------------
+    input   wire    [NB_INST-1:0]      i_data_mem,
+
 
 
 	//----------------------------------------------------
@@ -53,13 +60,14 @@ module top_mips #(
 	// ID - OUTPUT
 	//----------------------------------------------------
 
-	output wire  [NB_INST-1:0]       		o_instruction,////////////////////////////////////////////////
-    output wire  [NB_ADDR-1:0]              o_pc,/////////////////////////////////////////////////////////
+	output wire  [NB_INST-1:0]       		o_instruction,/////////////////////////////////////////
+    output wire  [NB_ADDR-1:0]              o_pc,//////////////////////////////////////////////////
+    output wire [NB_DATA-1:0]               o_data_read_debug
 
 	//----------------------------------------------------
 	// EX - OUTPUT
 	//----------------------------------------------------
-    output  wire    [NB_DATA_OUT-1:0]  		o_alu_result
+
 
 );
 
@@ -74,6 +82,10 @@ module top_mips #(
 	wire  	[NB_FUNCT-1:0]      funct;
     wire                       	signal_control_mult_A;
     wire                       	signal_control_mult_B;
+    wire    [NB_DATA_OUT-1:0]  	alu_result;
+    wire                        signal_control_mult_wb;
+    wire    [NB_INST-1:0]       o_mux_wb;
+    wire    [NB_REG-1:0]        rt;
 //--------------------------------------------------------------------------------------
 
 IF u_IF(
@@ -91,19 +103,26 @@ IF u_IF(
 
 ID u_ID(
 	.i_clk(i_clk),
-	.i_data_input(i_data_input),
-	.i_address_data(i_address_data),
-	.i_write(i_id_write),
+	.i_data_input(o_mux_wb),
+	.i_address_data(rt),
+	.i_write_debug_reg_file(i_write_debug_reg_file),
+	//.i_write_data(i_write_data),
 	.i_pc(o_if_pc),
 	.i_instruction(o_if_instruction),
+	.i_address_read_debug(i_address_read_debug),
+	.i_address_write_debug(i_address_write_debug),/////////////////////////////////////////////
+	.i_write_data_debug(i_write_data_debug),///////////////////////////////////////////////////
 	.o_funct(funct),
 	.o_instruction(o_instruction),
 	.o_pc(o_pc),
 	.o_data_1(data_1),
 	.o_data_2(data_2),
+	.o_rt(rt),
+	.o_data_read_debug(o_data_read_debug),
 	.o_sign_extend(sign_extend),
 	.o_signal_control_mult_A(signal_control_mult_A),
-	.o_signal_control_mult_B(signal_control_mult_B)
+	.o_signal_control_mult_B(signal_control_mult_B),
+	.o_signal_control_mult_wb(signal_control_mult_wb)
 );
 
 EX u_EX(
@@ -114,8 +133,17 @@ EX u_EX(
     .i_code(funct),
     .i_selector_mux_A(signal_control_mult_A),
     .i_selector_mux_B(signal_control_mult_B),
-    .o_alu_result(o_alu_result)
+    .o_alu_result(alu_result)
 );
+
+WB u_WB(
+	.i_data_alu(alu_result), 
+	.i_data_mem(i_data_mem),
+	.i_selector(signal_control_mult_wb),
+	.o_mux(o_mux_wb)
+);
+
+
 
 
 endmodule

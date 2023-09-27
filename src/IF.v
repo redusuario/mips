@@ -10,12 +10,10 @@ module IF #(
 	input 		wire 						i_enable,
 	input 		wire 						i_reset,
 	input 		wire 	[NB_ADDR - 1:0] 	i_pc,
-
 	input  		wire                        i_write,
 	input  		wire 	[NB_INST - 1:0]     i_instruction,
 	input  		wire 	[NB_ADDR - 1:0]     i_address,
 	output 		wire 	[NB_INST - 1:0]     o_instruction,
-
 	output 		wire 	[NB_ADDR - 1:0]	   	o_pc 
 );
 

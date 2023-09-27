@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-
-
 module WB_multiplexor
 #(
     parameter               NB_INST         =   32,         // Longitud de registro con signo
