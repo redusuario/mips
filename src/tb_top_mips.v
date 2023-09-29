@@ -50,12 +50,12 @@ module tb_top_mips();
     //----------------------------------------------------
 
 
-    reg     [NB_REG-1:0]        i_address_data;
-    reg                         i_write_debug_reg_file;
+    //reg     [NB_REG-1:0]        i_address_data;
+    //reg                         i_write_debug_reg_file;
     //reg                         i_write_data;
-    reg  [NB_REG-1:0]           i_address_read_debug;
-    reg  [NB_REG-1:0]           i_address_write_debug;
-    reg  [NB_DATA-1:0]          i_write_data_debug;
+    //reg  [NB_REG-1:0]           i_address_read_debug;
+    //reg  [NB_REG-1:0]           i_address_write_debug;
+   // reg  [NB_DATA-1:0]          i_write_data_debug;
     //----------------------------------------------------
     // EX - INPUT
     //----------------------------------------------------
@@ -90,12 +90,12 @@ top_mips u_top_mips
     .i_write(i_write),
     .i_instruction(i_instruction),
     .i_address(i_address),
-    .i_address_data(i_address_data),
-    .i_write_debug_reg_file(i_write_debug_reg_file),
+    //.i_address_data(i_address_data),
+    //.i_write_debug_reg_file(i_write_debug_reg_file),
     //.i_write_data(i_write_data),
-    .i_address_read_debug(i_address_read_debug),
-    .i_address_write_debug(i_address_write_debug),
-    .i_write_data_debug(i_write_data_debug),
+    //.i_address_read_debug(i_address_read_debug),
+    //.i_address_write_debug(i_address_write_debug),
+    //.i_write_data_debug(i_write_data_debug),
     .i_data_mem(i_data_mem),
     .o_instruction(o_instruction),
     .o_pc(o_pc),
@@ -104,7 +104,7 @@ top_mips u_top_mips
 
     initial begin
       
-        $dumpfile("dump.vcd"); $dumpvars;
+        //$dumpfile("dump.vcd"); $dumpvars;
         i_reset = 1;
 
         #20
@@ -120,16 +120,16 @@ top_mips u_top_mips
         //      000000     00001      00011   00010     00000       100000
 
         i_write =  1'b1;
-        i_write_debug_reg_file =  1'b1;
+        //i_write_debug_reg_file =  1'b1;
         //i_write_data =  1'b1;
         #20
-        i_address_write_debug = 5'b1;  
+        //i_address_write_debug = 5'b1;  
         #20
-        i_write_data_debug = 32'b11;
+        //i_write_data_debug = 32'b10;
         #20
-        i_address_write_debug = 5'b10;  
+        //i_address_write_debug = 5'b10;  
         #20
-        i_write_data_debug = 32'b11;
+        //i_write_data_debug = 32'b11;
         #20
         i_address = 32'b1;
         #20
@@ -137,12 +137,13 @@ top_mips u_top_mips
         #20
         i_pc = 32'b1;
         #100
-        i_address_read_debug = 5'b11;
+        //i_address_read_debug = 5'b10;
         #100
-
-        $display("############# Test OK ############");
-        $finish();
-    end
+        if (o_data_read_debug == 32'b100 )
+          $display("******  Test CORRECTO ******");
+        else     
+          $display("############# Test FALLO ############");
+        end
   
       // CLOCK_GENERATION
     always #10 i_clk = ~i_clk;
