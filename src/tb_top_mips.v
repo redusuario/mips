@@ -131,11 +131,11 @@ top_mips u_top_mips
         #20
         //i_write_data_debug = 32'b11;
         #20
-        i_address = 32'b1;
+        i_address = 32'b0;
         #20
         i_instruction = 32'b000000_00001_00011_00010_00000_100000;
         #20
-        i_pc = 32'b1;
+        i_pc = 32'b0;
         #100
         //i_address_read_debug = 5'b10;
         #100

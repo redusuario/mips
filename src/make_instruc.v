@@ -56,13 +56,13 @@ always @(posedge i_clk or posedge i_reset) begin    //solo guardo la entrada cua
         o_step <= 0;
     end else if (i < 4 && i_rx_done) begin
         //ready_instruc<=1'b0;
-        if(j==2)begin //ignoro los dos primeros datos basura
+        //if(j==2)begin //ignoro los dos primeros datos basura
         temp[8*(3-i) +: 8] <= entrada;        //guarda de mas significativo a menos 
         aux <= entrada;
         i <= i + 1;
-        end
-        else
-        j <= j + 1;
+        //end
+        //else
+        //j <= j + 1;
         end else begin if(i==4)begin
         ready_instruc<=1'b1;
         instruccion<=temp; 

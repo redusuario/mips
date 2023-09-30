@@ -76,7 +76,7 @@ module top #(
 
 //--------------------------------------------------------------------------------------
 	// signal declaration
-	reg 	[NB_ADDR - 1:0] 	i_pc=1; //BORRAR, POR AHORA SE HACE ASI
+	reg 	[NB_ADDR - 1:0] 	i_pc=4; //BORRAR, POR AHORA SE HACE ASI
 	wire                        i_write;
 	wire 						i_enable;
 	wire 	[NB_INST - 1:0]     i_instruction;
@@ -101,18 +101,18 @@ top_mips u_top_mips(
 	.i_address(i_address),
 	//.i_data_mem(i_data_mem), aun no se IMPLEMENTA
 	.o_instruction(o_instruction),
-	.o_pc(o_if_pc),
+	.o_pc(o_pc),
 	.o_data_read_debug(o_data_read_debug)
 );
 	mod_m_counter #(.M(DVSR), .N(DVSR_BIT)) baud_gen_unit
-		( .clk(clk), .reset(reset), .q(), .max_tick(tick));
+		( .clk(i_clk), .reset(i_reset), .q(), .max_tick(tick));
 
 	uart_rx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_rx_unit
-		( .clk(clk), .reset(reset), .rx(rx), .s_tick(tick),
+		( .clk(i_clk), .reset(i_reset), .rx(rx), .s_tick(tick),
 		.rx_done_tick(rx_done_tick), .dout(rx_data));
 
   	uart_tx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_tx_unit
-		( .clk(clk), .reset(reset), .tx_start(empty), 
+		( .clk(i_clk), .reset(i_reset), .tx_start(empty), 
 		.s_tick(tick), .din(tx_fifo_out),
 		.tx_done_tick(tx_done_tick), .tx(tx));	
 
@@ -122,8 +122,8 @@ top_mips u_top_mips(
     )
     u_make_instruc
     (
-        .i_clk                (clk),              
-        .i_reset              (reset),            
+        .i_clk                (i_clk),              
+        .i_reset              (i_reset),            
         .entrada        (rx_data),
         .i_rx_done        (rx_done_tick),
         .ready_instruc     (i_write),       
@@ -139,11 +139,11 @@ top_mips u_top_mips(
     )
     u_instruc_buffer
     (
-        .clk                (clk),              
-        .reset              (reset), 
+        .clk                (i_clk),              
+        .reset              (i_reset), 
         .done                 (done),
         .wr                  (wr_uart),
-        .enviar             (ready_instruc),
+        //.enviar             (ready_instruc),
         .tx_done_tick       (tx_done_tick),     
         .entrada             (o_data_read_debug), 
         .parte                (tx_fifo_out),
