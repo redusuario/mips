@@ -85,7 +85,7 @@ module top_mips #(
     wire    [NB_DATA_OUT-1:0]  	alu_result;
     wire                        signal_control_mult_wb;
     wire    [NB_INST-1:0]       o_mux_wb;
-    wire    [NB_REG-1:0]        rt;
+    wire    [NB_REG-1:0]        rd;
 //--------------------------------------------------------------------------------------
 
 IF u_IF(
@@ -99,12 +99,12 @@ IF u_IF(
 	.o_instruction(o_if_instruction),
 	.o_pc(o_if_pc)
 );
-
+//rd ← rs + rt
 
 ID u_ID(
 	.i_clk(i_clk),
 	.i_data_input(o_mux_wb),
-	.i_address_data(rt),
+	.i_address_data(rd),
 	.i_write_debug_reg_file(i_write_debug_reg_file),
 	//.i_write_data(i_write_data),
 	.i_pc(o_if_pc),
@@ -117,7 +117,7 @@ ID u_ID(
 	.o_pc(o_pc),
 	.o_data_1(data_1),
 	.o_data_2(data_2),
-	.o_rt(rt),
+	.o_rd(rd),
 	.o_data_read_debug(o_data_read_debug),
 	.o_sign_extend(sign_extend),
 	.o_signal_control_mult_A(signal_control_mult_A),
