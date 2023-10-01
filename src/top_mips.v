@@ -34,12 +34,12 @@ module top_mips #(
 	// ID - INPUT
 	//----------------------------------------------------
 
-    input wire  [NB_REG-1:0]              	i_address_data,
-    input wire                            	i_write_debug_reg_file,
+    //input wire  [NB_REG-1:0]              	i_address_data,
+    //input wire                            	i_write_debug_reg_file,
     //input wire 								i_write_data,
-    input wire  [NB_REG-1:0]                i_address_read_debug,
-    input wire  [NB_REG-1:0]                i_address_write_debug,
-    input wire  [NB_DATA-1:0]               i_write_data_debug,
+ 
+    //input wire  [NB_REG-1:0]                i_address_write_debug,
+    //input wire  [NB_DATA-1:0]               i_write_data_debug,
 	//----------------------------------------------------
 	// EX - INPUT
 	//----------------------------------------------------
@@ -86,6 +86,8 @@ module top_mips #(
     wire                        signal_control_mult_wb;
     wire    [NB_INST-1:0]       o_mux_wb;
     wire    [NB_REG-1:0]        rd;
+    wire  [NB_REG-1:0]                o_address_read_debug;
+
 //--------------------------------------------------------------------------------------
 
 IF u_IF(
@@ -104,14 +106,14 @@ IF u_IF(
 ID u_ID(
 	.i_clk(i_clk),
 	.i_data_input(o_mux_wb),
-	.i_address_data(rd),
-	.i_write_debug_reg_file(i_write_debug_reg_file),
+	.i_address_data(o_address_read_debug),
+	//.i_write_debug_reg_file(i_write_debug_reg_file),
 	//.i_write_data(i_write_data),
 	.i_pc(o_if_pc),
 	.i_instruction(o_if_instruction),
-	.i_address_read_debug(i_address_read_debug),
-	.i_address_write_debug(i_address_write_debug),/////////////////////////////////////////////
-	.i_write_data_debug(i_write_data_debug),///////////////////////////////////////////////////
+	.i_address_read_debug(o_address_read_debug),
+	//.i_address_write_debug(i_address_write_debug),/////////////////////////////////////////////
+	//.i_write_data_debug(i_write_data_debug),///////////////////////////////////////////////////
 	.o_funct(funct),
 	.o_instruction(o_instruction),
 	.o_pc(o_pc),
@@ -143,7 +145,13 @@ WB u_WB(
 	.o_mux(o_mux_wb)
 );
 
-
+ID_EX I_ID_EX(
+	.i_rd(rd), 
+	.i_clk(i_clk),
+	.i_reset (i_reset),
+	.i_step(i_enable),
+	.o_address_read_debug (o_address_read_debug)
+);
 
 
 endmodule
