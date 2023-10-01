@@ -38,7 +38,7 @@ module ID #(
 
     wire  [NB_REG-1:0]        		rs;
 	wire  [NB_REG-1:0]        	rt;
-	wire  [NB_REG-1:0]        		rd;
+	//wire  [NB_REG-1:0]        		rd;
     wire  [NB_IMMEDIATE-1:0]        immediate;
     wire  [NB_OPCODE-1:0]           opcode;
     wire                            signal_control_write_data_reg_file;

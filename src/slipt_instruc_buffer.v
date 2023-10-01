@@ -41,7 +41,7 @@ always @(*) begin
     end else begin
         // Capturamos la entrada nueva en la cola si no está llena
         //if (!cola_llena && enviar) begin                          // SOLO GUARTDA CUANDO ALGO ME INDIQUE
-        if (!cola_llena) begin  
+        if (!cola_llena & entrada==12 ) begin  
             cola[contador_cola] = entrada;
             //cola_llena <= (contador_cola == 3'b111);
             cola_llena = (contador_cola == 240);
@@ -50,7 +50,7 @@ always @(*) begin
 
         // Lógica para seleccionar la entrada actual
      //   if (contador == 3'b000 && !cola_vacia) begin
-            registro = cola[0];
+            registro = cola[0];        ////cambio <= por solo = porque uso always *
       //  end
 
         // Lógica para enviar las partes de la entrada actual
