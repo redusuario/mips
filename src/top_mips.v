@@ -87,6 +87,7 @@ module top_mips #(
     wire    [NB_INST-1:0]       o_mux_wb;
     wire    [NB_REG-1:0]        rd;
     wire  [NB_REG-1:0]                o_address_read_debug;
+
 //--------------------------------------------------------------------------------------
 
 IF u_IF(
@@ -100,7 +101,7 @@ IF u_IF(
 	.o_instruction(o_if_instruction),
 	.o_pc(o_if_pc)
 );
-
+//rd ← rs + rt
 
 ID u_ID(
 	.i_clk(i_clk),

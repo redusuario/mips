@@ -36,8 +36,11 @@ module ID #(
     output wire                             o_signal_control_mult_wb //////////////////
 );
 
+//rd ← rs + rt
+
     wire  [NB_REG-1:0]        		rs;
-	wire  [NB_REG-1:0]        	rt;
+
+	 wire  [NB_REG-1:0]        	rt;
 	//wire  [NB_REG-1:0]        		rd;
     wire  [NB_IMMEDIATE-1:0]        immediate;
     wire  [NB_OPCODE-1:0]           opcode;
