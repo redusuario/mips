@@ -44,7 +44,7 @@ module tb_top();
       i_reset = 1'b1;
       wr_uart=1'b0;
       rx = 1'b1;
-      
+      //se carga 000000 00111 10000 10011 00000 100000
       #10
       i_reset = 1'b0;
       rx = 1'b0;
@@ -71,7 +71,7 @@ module tb_top();
       rx = 1'b0;
       
             #104167
-      rx = 1'b0;
+      rx = 1'b1;
       
       #104167
       rx = 1'b1;
@@ -86,7 +86,7 @@ module tb_top();
       rx = 1'b0;
       
       #104167
-      rx = 1'b0;
+      rx = 1'b1; //esta póner a 0 para probar el caso de bucle
 
       #104167
       rx = 1'b0;

@@ -65,6 +65,7 @@ always @(posedge i_clk or posedge i_reset) begin    //solo guardo la entrada cua
         //j <= j + 1;
         end else begin if(i==4)begin
         ready_instruc<=1'b1;
+        //(temp==32'hFFFFFFFF) 
         instruccion<=temp; 
         address <= address+4;
         o_step <= 1;

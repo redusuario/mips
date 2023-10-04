@@ -20,9 +20,9 @@ module ID_register_file
     input wire  [NB_REG-1:0]              i_address_read_debug,
     //input wire  [NB_REG-1:0]              i_address_write_debug,///////////////////////////
     //input wire  [NB_DATA-1:0]             i_write_data_debug,//////////////////////////////
-    output wire [NB_DATA-1:0]             o_data_1,
-    output wire [NB_DATA-1:0]             o_data_2,
-    output wire [NB_DATA-1:0]             o_data_read_debug
+    output reg [NB_DATA-1:0]             o_data_1,
+    output reg [NB_DATA-1:0]             o_data_2,
+    output reg [NB_DATA-1:0]             o_data_read_debug
 );
 
     reg [NB_DATA-1:0] banco_reg[SIZE_REG-1:0];
@@ -70,8 +70,13 @@ module ID_register_file
     
     //OUTPUT
 
-    assign o_data_1 = banco_reg[i_address_1];
-    assign o_data_2 = banco_reg[i_address_2];
-    assign o_data_read_debug = banco_reg[i_address_read_debug];
-
+    //assign o_data_1 = banco_reg[i_address_1];
+    //assign o_data_2 = banco_reg[i_address_2];
+    //assign o_data_read_debug = banco_reg[i_address_read_debug];
+    always @(*)
+      begin
+        o_data_1            <=   banco_reg[i_address_1];
+        o_data_2            <=  banco_reg[i_address_2];
+        o_data_read_debug      <=  banco_reg[i_address_read_debug];
+      end
 endmodule
