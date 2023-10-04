@@ -31,6 +31,7 @@ IF_memoria_instrucciones u_memoria_instrucciones
 (
     .i_clk(i_clk),
     .i_reset(i_reset),
+    .i_enable(i_enable),
     .i_pc(pc),    
     .i_write(i_write),
     .i_instruction(i_instruction),

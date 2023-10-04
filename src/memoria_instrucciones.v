@@ -11,11 +11,13 @@ module IF_memoria_instrucciones
 (
     input  wire                            i_clk,
     input  wire                            i_reset,
-    input  wire [NB_ADDR - 1:0]            i_pc,    
+    input  wire [NB_ADDR - 1:0]            i_pc,   
+    input  wire                            i_enable, 
     input  wire                            i_write,
     input  wire [NB_INST - 1:0]            i_instruction,
     input  wire [NB_ADDR - 1:0]            i_address,
-    output wire [NB_INST- 1:0]             o_instruction
+    //output wire [NB_INST- 1:0]             o_instruction
+    output reg [NB_INST- 1:0]             o_instruction
 );
     
     //direcciones 32 bits
@@ -23,6 +25,15 @@ module IF_memoria_instrucciones
     
     reg [NB_INST-1:0] memory[TAM-1:0];
     integer                   i;
+    
+    
+    always @(posedge i_reset)
+    begin
+        for (i = 0; i < TAM; i = i + 1) begin
+            memory[i] = 0;
+        end  
+    end
+    
     
     initial 
     begin
@@ -50,7 +61,14 @@ module IF_memoria_instrucciones
     //read operation 
   	//assign o_instruction = (i_write) ? memory[i_pc] : memory[i_address];
     //assign o_instruction = (i_write) ? memory[i_address] : memory[i_pc];
-    assign o_instruction = memory[i_pc];
+    always @(posedge i_clk)
+    begin
+        if (i_enable)
+        begin
+           o_instruction  <= memory[i_pc];
+        end
+    end
+      //assign o_instruction = memory[i_pc];
 
 
 

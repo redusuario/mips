@@ -8,7 +8,9 @@ module ID_register_file
 )
 (
     // INPUTS
-    input wire                            i_clk,   
+    input wire                            i_clk,  
+    input wire                            i_enable,
+    input wire                            i_reset, 
     input wire  [NB_REG-1:0]              i_address_1,
     input wire  [NB_REG-1:0]              i_address_2,  
     input wire  [NB_DATA-1:0]             i_data_input,
@@ -56,7 +58,12 @@ module ID_register_file
         //if (i_write_debug_reg_file) begin             // del clock y la escritura se encuentre habilitada
          //   banco_reg[i_address_write_debug] <= i_write_data_debug; ahora cargo la data en for
         //end
-        if (i_write_data) begin
+        if(i_reset) begin
+           for (i = 0; i < SIZE_REG; i = i + 1) begin
+                banco_reg[i] = i;
+             end
+        end else if
+        (i_write_data & i_enable) begin
             banco_reg[i_address_data] <= i_data_input;
         end
     end

@@ -14,6 +14,8 @@ module ID #(
 (
     // INPUTS
     input wire                            	i_clk,/////////////////////////////////////////////////
+    input wire                              i_enable,
+    input wire                              i_reset,
     input wire  [NB_DATA-1:0]             	i_data_input,//////////////////////////////////////////
     input wire  [NB_REG-1:0]              	i_address_data,////////////////////////////////////////
     //input wire                            	i_write_debug_reg_file,////////////////////////////////
@@ -36,7 +38,7 @@ module ID #(
     output wire                             o_signal_control_mult_wb //////////////////
 );
 
-//rd ‚Üê rs + rt
+//rd ‚Ü? rs + rt
 
     wire  [NB_REG-1:0]        		rs;
 
@@ -61,6 +63,8 @@ ID_decodificador u_decodificador(
 
 ID_register_file u_register_file(
     .i_clk(i_clk), 
+    .i_reset(i_reset),
+    .i_enable(i_enable),
     .i_address_1(rs),
     .i_address_2(rt),    
     .i_data_input(i_data_input),

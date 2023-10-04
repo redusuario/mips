@@ -101,10 +101,12 @@ IF u_IF(
 	.o_instruction(o_if_instruction),
 	.o_pc(o_if_pc)
 );
-//rd â† rs + rt
+//rd â†? rs + rt
 
 ID u_ID(
 	.i_clk(i_clk),
+	.i_enable(i_enable),
+	.i_reset(i_reset),
 	.i_data_input(o_mux_wb),
 	.i_address_data(o_address_read_debug),
 	//.i_write_debug_reg_file(i_write_debug_reg_file),

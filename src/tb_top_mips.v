@@ -133,13 +133,13 @@ top_mips u_top_mips
         #20
         i_address = 32'b0;
         #20
-        i_instruction = 32'b000000_00001_00010_00011_00000_100000;
+        i_instruction = 32'b000000_00001_00010_00100_00000_100000;
         #20
         i_pc = 32'b0;
         #100
         //i_address_read_debug = 5'b10;
         #100
-        if (o_data_read_debug == 32'b100 )
+        if (o_data_read_debug == 32'b11 )
           $display("******  Test CORRECTO ******");
         else     
           $display("############# Test FALLO ############");
