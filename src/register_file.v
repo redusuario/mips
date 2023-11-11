@@ -1,70 +1,57 @@
 `timescale 1ns / 1ps
 
-module ID_register_file
-#(
-    parameter               NB_DATA         =   32,
-    parameter               NB_REG          =   5,
-    parameter               SIZE_REG        =   32
-)
-(
-    // INPUTS
-    input wire                            i_clk,   
-    input wire  [NB_REG-1:0]              i_address_1,
-    input wire  [NB_REG-1:0]              i_address_2,  
-    input wire  [NB_DATA-1:0]             i_data_input,
-    input wire  [NB_REG-1:0]              i_address_data,
-    //input wire                            i_write_debug_reg_file,
-    input wire                            i_write_data,
-    input wire  [NB_REG-1:0]              i_address_read_debug,
-    //input wire  [NB_REG-1:0]              i_address_write_debug,///////////////////////////
-    //input wire  [NB_DATA-1:0]             i_write_data_debug,//////////////////////////////
-    output wire [NB_DATA-1:0]             o_data_1,
-    output wire [NB_DATA-1:0]             o_data_2,
-    output wire [NB_DATA-1:0]             o_data_read_debug
-);
-
-    reg [NB_DATA-1:0] banco_reg[SIZE_REG-1:0];
-    integer           i;
+module register_file
+    #(
+        parameter   REGS        =   5,
+        parameter   NBITS       =   32,
+        parameter   TAM         =   32  
+    )
+    (
+        input   wire                        i_clk,
+        input   wire                        i_reset,
+        input   wire                        i_RegWrite,
+        input   wire                        i_step,
+        input   wire    [REGS-1:0]          i_dir_rs, //Leer registro 1
+        input   wire    [REGS-1:0]          i_dir_rt, //Leer registro 2
+        input   wire    [REGS-1:0]          i_RD, //Escribir registro
+        input   wire    [REGS-1:0]          i_RegDebug, //Leer registro debug
+        input   wire    [NBITS-1:0]         i_DatoEscritura, //Escribir dato
+        output  reg     [NBITS-1:0]         o_data_rs, // Dato leido 1
+        output  reg     [NBITS-1:0]         o_data_rt, // Dato leido 2
+        output  reg     [NBITS-1:0]         o_RegDebug
+    );
+    
+    reg     [NBITS-1:0]         memory[TAM-1:0];
+    reg     [NBITS-1:0]         rs;
+    reg     [NBITS-1:0]         rt;
+    reg     [NBITS-1:0]         Reg_Debug;
+    integer                     i;
     
     initial
     begin
-        for (i = 0; i < SIZE_REG; i = i + 1) begin
-                banco_reg[i] = i;
-        end
-    end
-
-//R-Type
-//SLL
-//SRL
-//SRA
-//SLLV
-//SRLV
-//SRAV
-//ADDU
-//SUBU
-//AND
-//OR
-//XOR
-//NOR
-//SLT
-//      OPCODE      RS          RT      RD      SHAMT       FUNCT
-//ADD:  000000  |   RS      |   RT  |   RD  |   00000   |   100000
-
-
-    //Write operation
-    always @(posedge i_clk) begin               // Realizo la escritura durante el semiciclo positivo
-        //if (i_write_debug_reg_file) begin             // del clock y la escritura se encuentre habilitada
-         //   banco_reg[i_address_write_debug] <= i_write_data_debug; ahora cargo la data en for
-        //end
-        if (i_write_data) begin
-            banco_reg[i_address_data] <= i_data_input;
+        for (i = 0; i < TAM; i = i + 1) begin
+                memory[i] = i;
         end
     end
     
-    //OUTPUT
 
-    assign o_data_1 = banco_reg[i_address_1];
-    assign o_data_2 = banco_reg[i_address_2];
-    assign o_data_read_debug = banco_reg[i_address_read_debug];
+    always @(*)
+    begin
+        o_data_rs       <=  memory[i_dir_rs];
+        o_data_rt       <=  memory[i_dir_rt];
+        o_RegDebug      <=  memory[i_RegDebug];
+    end
 
+    always @(negedge i_clk )
+    begin
+        if(i_reset) begin
+            for (i = 0; i < TAM; i = i + 1) begin
+                memory[i] <= i;
+            end
+        end else if(i_RegWrite & i_step)
+        begin
+            memory[i_RD] <= i_DatoEscritura ;
+        end
+    end
 endmodule
+

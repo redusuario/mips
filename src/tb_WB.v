@@ -4,22 +4,46 @@
 
 module tb_WB();
 
-    localparam    NB_INST         =   32;         // Longitud de registro con signo
-    localparam    NB_SELECTOR     =   2;          // Longitud del selector
-
-    reg                       i_clk;
-    reg    [NB_INST-1:0]      i_data_alu;
-    reg    [NB_INST-1:0]      i_data_mem;
-    reg                       i_selector;
-    wire   [NB_INST-1:0]      o_mux;
+    localparam      NBITS           = 32;
+    localparam      HWORDBITS       = 16;
+    localparam      BYTENBITS       = 8;
+    localparam      REGS            = 5;
+    localparam      TNBITS          = 2; 
 
 
-WB u_WB
-(
-    .i_data_alu(i_data_alu), 
-    .i_data_mem(i_data_mem),
-    .i_selector(i_selector),
-    .o_mux(o_mux)
+    
+    reg                            i_clk;
+
+    reg                            MEM_WB_LUI;
+    reg    [NBITS-1        :0]     MEM_WB_Extension;
+    reg    [NBITS-1        :0]     MEM_WB_DatoMemoria;
+    reg    [1              :0]     MEM_WB_TamanoFiltroL;
+    reg                            MEM_WB_ZeroExtend;
+    reg                            MEM_WB_MemToReg;
+    reg    [NBITS-1        :0]     MEM_WB_ALU;
+    reg                            MEM_WB_JAL;
+    reg    [NBITS-1        :0]     MEM_WB_PC8;
+    reg    [REGS-1         :0]     MEM_WB_RegistroDestino;
+
+    wire   [NBITS-1        :0]     WB_DatoEscritura_o;
+    wire   [NBITS-1        :0]     WB_EscribirDato_o;
+    wire   [REGS-1         :0]     WB_RegistroDestino_o;
+
+
+WB u_WB(
+    .MEM_WB_LUI(MEM_WB_LUI),
+    .MEM_WB_Extension(MEM_WB_Extension),
+    .MEM_WB_DatoMemoria(MEM_WB_DatoMemoria),
+    .MEM_WB_TamanoFiltroL(MEM_WB_TamanoFiltroL),
+    .MEM_WB_ZeroExtend(MEM_WB_ZeroExtend),
+    .MEM_WB_MemToReg(MEM_WB_MemToReg),
+    .MEM_WB_ALU(MEM_WB_ALU),
+    .MEM_WB_JAL(MEM_WB_JAL),
+    .MEM_WB_PC8(MEM_WB_PC8),
+    .MEM_WB_RegistroDestino(MEM_WB_RegistroDestino),
+    .WB_DatoEscritura_o(WB_DatoEscritura_o),
+    .WB_EscribirDato_o(WB_EscribirDato_o),
+    .WB_RegistroDestino_o(WB_RegistroDestino_o)
 );
 
     initial begin
@@ -28,24 +52,11 @@ WB u_WB
 
         #20
         i_clk = 1'b0;
+        //reset = 1'b1;
         #20
-        //      OPCODE      RS          RT      RD      SHAMT       FUNCT
-        //ADD:  000000  |   RS      |   RT  |   RD  |   00000   |   100000
-        //      000000     00001      00011   00010     00000       100000
+        //reset = 1'b0;
         #20
-        i_data_alu = 1'b01;
-        i_data_mem = 1'b10;
-        #20
-        i_selector = 1'b1;
-        #20
-        i_selector = 1'b0;
-        #20
-        i_data_alu = 1'b101;
-        i_data_mem = 1'b110;
-        #20
-        i_selector = 1'b1;
-        #20
-        i_selector = 1'b0;
+
         #100
         $display("############# Test OK ############");
         $finish();

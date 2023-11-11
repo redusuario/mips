@@ -1,104 +1,102 @@
-// Code your design here
 `timescale 1ns / 1ps
 
-module uart_rx
-#(
-	parameter DBIT    = 8, // # data bits
-			  SB_TICK = 16 // # ticks for stop bits
-)
-(
-	input 	wire 	clk, reset,
-	input 	wire 	rx, s_tick,
-	output 	reg 	rx_done_tick,
-	output 	wire 	[7:0] dout
+module rx
+    #(
+        parameter       CLK_FR     = 50000000,  
+        parameter       BAUD_RATE    = 9600, 
+        parameter       DIV_SAMPLE   = 16, //oversampling,16 veces la tasa de baudios 
+        parameter       DBIT    = 8 
+    )
+    (
+        input   wire                        i_clk,
+        input   wire                        i_reset,
+        input   wire                        i_rx_bit,
+        output  wire                        o_ready,
+        output  wire   [DBIT-1    :0]       o_data
+    );
+    
+    //Estados
+    localparam     IDLE                = 1'b0;
+    localparam     RECEIVING           = 1'b1;
+    
+    //Parametros locales    
+    localparam     BIT_COUNTER_SIZE    = $clog2(DBIT+1); //para contener bitcounter
+    localparam     DIV_COUNTER         = CLK_FR/(BAUD_RATE*DIV_SAMPLE);  // have to divide the system clock frequency to get a frequency (div_sample) time higher than (baud_rate)  
+    localparam     MID_SAMPLE          = (DIV_SAMPLE/2);  // medio de un bit en el que desea  tomar la muestra
+    localparam     COUNTER_SIZE        = $clog2(DIV_COUNTER+1)+1;//size para contener el el div_counter
+    localparam     SAMPLE_COUNTER_SIZE = $clog2(DIV_SAMPLE+1);
+    
+    
+    reg         [DBIT-1    :0]                  shift_reg, shift_reg_next;   
+    reg                                         state, state_next;
+    reg                                         data_ready, data_ready_next;    
+    reg         [BIT_COUNTER_SIZE-1     :0]     bitcounter, bitcounter_next; // Contador para saber si tengo los 8 bits
+    reg         [SAMPLE_COUNTER_SIZE-1  :0]     samplecounter, samplecounter_next; // Contador de muestras de 2 bits para contar hasta 4 para oversampling
+    reg         [COUNTER_SIZE+1         :0]     counter; // Contador de la tasa de baudios
 
-);
-
-    // LOCAL_PARAMETERS
-    localparam [1:0]                 
-    	idle    = 2'b00,
-        start   = 2'b01,
-        data	= 2'b10,
-        stop    = 2'b11;
-
-
-	// signal declaration
-	reg [1:0] state_reg , state_next ;
-	reg [3:0] s_reg , s_next ;
-	reg [2:0] n_reg , n_next ;
-	reg [7:0] b_reg , b_next ;
-
-
-	// body
-	// FSMD state & data registers
-	always @( posedge clk , posedge reset)
-		if (reset)
-			begin
-				state_reg <= idle;
-				s_reg <= 0;
-				n_reg <= 0;
-				b_reg <= 0;
-			end
-		else
-			begin
-				state_reg <= state_next ;
-				s_reg <= s_next;
-				n_reg <= n_next;
-				b_reg <= b_next;
-			end
-
-	// FSMD next-state logic
-	always @*
-		begin
-			state_next = state_reg;
-			rx_done_tick = 1'b0;
-			s_next = s_reg;
-			n_next = n_reg;
-			b_next = b_reg;
-
-		case(state_reg)
-			idle:
-				if (~rx)
-					begin
-						state_next = start;
-						s_next = 0;
-					end
-			start :
-				if (s_tick)
-					if (s_reg==7)
-						begin
-							state_next = data;
-							s_next = 0;
-							n_next = 0;
-						end
-					else
-						s_next = s_reg + 1;
-
-			data :
-				if (s_tick)
-					if (s_reg==15)
-						begin
-							s_next = 0;
-							b_next = {rx , b_reg [7:1]};
-							if (n_reg==(DBIT - 1))
-								state_next = stop;
-							else
-								n_next = n_reg + 1;
-						end
-					else
-						s_next = s_reg + 1;
-			stop:
-				if (s_tick)
-					if (s_reg==(SB_TICK - 1))
-						begin
-							state_next = idle;
-							rx_done_tick =1'b1;
-						end
-					else
-						s_next = s_reg + 1;
-		endcase
-	end
-	//output
-	assign dout = b_reg;
-
+    
+    assign o_data  = shift_reg [DBIT-1:0]; 
+    assign o_ready = data_ready;
+    
+    always @ (posedge i_clk, posedge i_reset)
+        begin 
+            if (i_reset)begin       
+                counter             <= 0; 
+                state               <= IDLE; 
+                bitcounter          <= 0; 
+                samplecounter       <= 0; 
+                shift_reg           <= 0;
+                data_ready          <= 0;
+            end else begin 
+                counter <= counter +1;
+                if (counter >= DIV_COUNTER-1) begin // si el contador es igual/mayor entra
+                    counter       <= 0; 
+                    state         <= state_next; 
+                    bitcounter    <= bitcounter_next;
+                    data_ready    <= data_ready_next;
+                    samplecounter <= samplecounter_next;
+                    shift_reg     <= shift_reg_next;                    
+                end
+            end
+        end
+       
+    always @* 
+    begin 
+        state_next          <=  state;
+        samplecounter_next  <=  samplecounter;
+        bitcounter_next     <=  bitcounter;
+        data_ready_next     <=  data_ready;
+        shift_reg_next      <=  shift_reg;
+        case (state)
+            IDLE:
+             begin 
+                if (~i_rx_bit) begin// Si el input de UART es 1 queda, esto el bit start en 0
+                    state_next          <= RECEIVING; 
+                    bitcounter_next     <= 0;
+                    samplecounter_next  <= 0;
+                    data_ready_next     <= 0;
+                end
+            end
+            RECEIVING: 
+            begin
+                if (samplecounter == MID_SAMPLE - 1) begin   
+                    shift_reg_next      <=  {i_rx_bit,shift_reg[DBIT-1:1]}; // si el contador de muestras es 1, activa el shift
+                end            
+                if (samplecounter == DIV_SAMPLE - 1) begin
+                    if (bitcounter == DBIT) begin // Si el contador de bits es 8, recibi el total de la data
+                        state_next      <= IDLE; 
+                        data_ready_next <= 1;
+                    end 
+                                       
+                    bitcounter_next     <= bitcounter + 1; 
+                    samplecounter_next  <= 0; //Reinicia el contador
+                end 
+                else begin 
+                    samplecounter_next  <= samplecounter + 1;          
+                end
+            end
+           default: 
+                state_next <= IDLE;
+         endcase
+    end         
 endmodule

@@ -1,96 +1,86 @@
 `timescale 1ns / 1ps
 
-module ID #(
-    parameter               NB_ADDR         =   32,
-    parameter               NB_INST         =   32,
-    parameter               NB_OPCODE       =   6,
-    parameter               NB_FUNCT        =   6,
-    parameter               NB_REG          =   5,     // Longitud del campo RS,RT,RD
-    parameter               NB_IMMEDIATE    =   16,
-    parameter               NB_DATA         =   32,
-    parameter               SIZE_REG        =   32,
-    parameter               NB_IMMED        =   16         // Longitud sin signo
-)
-(
-    // INPUTS
-    input wire                            	i_clk,/////////////////////////////////////////////////
-    input wire  [NB_DATA-1:0]             	i_data_input,//////////////////////////////////////////
-    input wire  [NB_REG-1:0]              	i_address_data,////////////////////////////////////////
-    //input wire                            	i_write_debug_reg_file,////////////////////////////////
-    //input wire                              i_write_data,//////////////////////////////////////////
-    input wire   [NB_ADDR-1:0]              i_pc,//////////////////////////////////////////////////
-    input wire   [NB_INST-1:0]              i_instruction,/////////////////////////////////////////
-    input wire  [NB_REG-1:0]                i_address_read_debug,//////////////////////////////////
-    //input wire  [NB_REG-1:0]                i_address_write_debug,
-    //input wire  [NB_DATA-1:0]               i_write_data_debug,
-	output wire  [NB_FUNCT-1:0]      		o_funct,///////////////////////////////////////////////
-	output wire  [NB_INST-1:0]       		o_instruction,/////////////////////////////////////////
-    output wire  [NB_ADDR-1:0]              o_pc,//////////////////////////////////////////////////
-    output wire [NB_DATA-1:0]             	o_data_1,//////////////////////////////////////////////
-    output wire [NB_DATA-1:0]             	o_data_2,//////////////////////////////////////////////
-    output wire  [NB_REG-1:0]               o_rd,
-    output wire [NB_DATA-1:0]               o_data_read_debug,/////////////////////////////////////
-    output wire [NB_INST-1:0]               o_sign_extend,/////////////////////////////////////////
-    output wire                             o_signal_control_mult_A,///////////////////////////////
-    output wire                             o_signal_control_mult_B,///////////////////////////////
-    output wire                             o_signal_control_mult_wb //////////////////
-);
+module ID
+    #(
+        parameter   NBITS           = 32,
+        parameter   NBITSJUMP       = 26,
+        parameter   REGS            = 5,
+        parameter   TAM_REG         = 32,
+        parameter   INBITS          = 16,
+        parameter   TNBITS          = 2
+        
+    )
+    (
+        input   wire                            i_clk,
+        input   wire                            i_reset,
+        input   wire                            i_step,
+        input   wire                            i_mem_wb_regwrite,
+        input   wire     [REGS-1:0]             i_dir_rs,
+        input   wire     [REGS-1:0]             i_dir_rt,
+        input   wire     [REGS-1:0]             i_tx_dir_debug,
+        input   wire     [REGS-1:0]             i_wb_dir_rd,
+        input   wire     [NBITS-1:0]            i_wb_write,
+        input   wire     [NBITSJUMP-1:0]        i_if_id_jump,
+        input   wire     [NBITS-1:0]            i_id_expc4,
+        input   wire     [INBITS-1:0]           i_id_inmediate,
+        input   wire     [TNBITS-1:0]           i_rctrl_extensionmode,
+        output  wire     [NBITS-1:0]            o_data_rs,
+        output  wire     [NBITS-1:0]            o_data_rt,
+        output  wire     [NBITS-1:0]            o_data_tx_debug,
+        output  wire     [NBITS-1:0]            o_id_jump,  
+        output  wire     [NBITS-1:0]            o_extensionresult
+        
+    );
 
-//rd ← rs + rt
+  
+    Sumador_PC_Jump
+    #(
+        .NBITS      (NBITS),
+        .NBITSJUMP  (NBITSJUMP)
+    )
+    u_Sumador_PC_Jump
+    (
+        .i_if_id_jump    (i_if_id_jump),
+        .i_id_expc4      (i_id_expc4),
+        .o_IJump         (o_id_jump)
+    );
+    
+    
+    register_file
+    #(
+        .REGS        (REGS),
+        .NBITS       (NBITS),
+        .TAM         (TAM_REG)
+    )
+    u_register_file
+    (
+        .i_clk               (i_clk),
+        .i_reset             (i_reset),
+        .i_step              (i_step),
+        .i_RegWrite          (i_mem_wb_regwrite),
+        .i_dir_rs            (i_dir_rs),
+        .i_dir_rt            (i_dir_rt),
+        .i_RegDebug          (i_tx_dir_debug),
+        .i_RD                (i_wb_dir_rd),
+        .i_DatoEscritura     (i_wb_write),
+        .o_data_rs           (o_data_rs),
+        .o_data_rt           (o_data_rt),
+        .o_RegDebug          (o_data_tx_debug)
 
-    wire  [NB_REG-1:0]        		rs;
-
-	 wire  [NB_REG-1:0]        	rt;
-	//wire  [NB_REG-1:0]        		rd;
-    wire  [NB_IMMEDIATE-1:0]        immediate;
-    wire  [NB_OPCODE-1:0]           opcode;
-    wire                            signal_control_write_data_reg_file;
-
-ID_decodificador u_decodificador(
-	.i_pc(i_pc),
-	.i_instruction(i_instruction),
-	.o_rs(rs),
-	.o_rt(rt),
-	.o_rd(o_rd),
-	.o_funct(o_funct),
-    .o_opcode(opcode),
-	.o_immediate(immediate),
-	.o_instruction(o_instruction),
-	.o_pc(o_pc)
-);
-
-ID_register_file u_register_file(
-    .i_clk(i_clk), 
-    .i_address_1(rs),
-    .i_address_2(rt),    
-    .i_data_input(i_data_input),
-    .i_address_data(i_address_data),
-    //.i_write_debug_reg_file(i_write_debug_reg_file),
-    .i_write_data(signal_control_write_data_reg_file),
-    .i_address_read_debug(i_address_read_debug),
-    //.i_address_write_debug(i_address_write_debug),
-    //.i_write_data_debug(i_write_data_debug),
-    .o_data_1(o_data_1),
-    .o_data_2(o_data_2),
-    .o_data_read_debug(o_data_read_debug)
-);
-
-ID_sign_extend u_sign_extend(
-    .i_immediate(immediate),
-    .i_opcode(opcode),
-    .o_sign_extend(o_sign_extend)
-);
-
-
-ID_control u_control
-(
-    .i_opcode(opcode),
-    .o_signal_control_mult_A(o_signal_control_mult_A),
-    .o_signal_control_mult_B(o_signal_control_mult_B),
-    .o_signal_control_mult_wb(o_signal_control_mult_wb),
-    .o_signal_control_write_data_reg_file(signal_control_write_data_reg_file)
-);
-
-
+    );
+  
+  
+    Extensor_Signo
+    #(
+        .i_NBITS                 (INBITS),
+        .e_NBITS                 (INBITS),
+        .o_NBITS                 (NBITS)
+    )
+    u_Extensor_Signo
+    (
+        .i_id_inmediate         (i_id_inmediate),
+        .i_extension_mode       (i_rctrl_extensionmode),
+        .o_extensionresult      (o_extensionresult)
+    );
 
 endmodule

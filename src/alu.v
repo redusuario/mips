@@ -1,55 +1,63 @@
-// Code your design here
 `timescale 1ns / 1ps
 
-module EX_alu 
-#(
-    parameter NB_OP = 6,  
-    parameter NB_DATA = 32,
-    parameter NB_DATA_OUT = 32
-)(   
-    input wire      [NB_DATA-1:0]      i_data_1,
-    input wire      [NB_DATA-1:0]      i_data_2,
-    input wire      [NB_OP-1:0]        i_code,
-    output wire     [NB_DATA_OUT-1:0]  o_alu_result
-);
+module ALU #(
+        parameter   NBITS   =   32,
+        parameter   RNBITS  =   5,
+        parameter   NB_OP   =   4      
+    )
+    (
+        input   wire    [NBITS-1    :0]     i_data_1,
+        input   wire    [NBITS-1    :0]     i_data_2,
+        input   wire    [RNBITS-1   :0]     i_shamt,
+        input   wire                        i_UShamt,
+        input   wire    [NB_OP-1    :0]     i_operation,
+        output  wire                        o_cero,
+        output  wire    [NBITS-1    :0]     o_result    
+    );
     
-    localparam  ADD = 6'b100000;
-    localparam  SUB = 6'b100010;
-    localparam  AND = 6'b100100;
-    localparam  OR  = 6'b100101;
-    localparam  XOR = 6'b100110;
-    localparam  SRA = 6'b000011;
-    localparam  SRL = 6'b000010;
-    localparam  NOR = 6'b100111;
-    
-    //auxiliar salida
-    reg             [NB_DATA_OUT-1:0]  o_result;
-     
-    //Se simplifico el always a solo operaciones
+    localparam  ADD = 4'b0010; 
+    localparam  SUB = 4'b0110; 
+    localparam  AND = 4'b0000; 
+    localparam  OR  = 4'b0001; 
+    localparam  XOR = 4'b1101;
+    localparam  SRA = 4'b0101; // A>>>B
+    localparam  SRL = 4'b0100; // A>>B(shamt)
+    localparam  NOR = 4'b1100; 
+    localparam  SLL = 4'b0011; // A<<B(shamt)
+    localparam  SLT = 4'b0111; // A es menor que B
+
+
+    reg [NBITS-1:0]     result;
+      
     always @(*)
-        begin
-            case(i_code)
-                ADD:
-                o_result = i_data_1 + i_data_2;
-                SUB:
-                o_result = i_data_1 - i_data_2;
+        begin : operations
+            case(i_operation)
                 AND:
-                o_result = i_data_1 & i_data_2;
+                result  =   i_data_1   &   i_data_2;
                 OR:
-                o_result = i_data_1 | i_data_2;
-                XOR:
-                o_result = i_data_1 ^ i_data_2;
-                SRA:
-                o_result = i_data_1 >>> i_data_2;
-                SRL:
-                o_result = i_data_1 >> i_data_2;
+                result  =   i_data_1   |   i_data_2;
+                ADD:
+                result  =   i_data_1   +   i_data_2;
+                SUB:
+                result  =   i_data_1   -   i_data_2;
+                SLT:
+                result  =   i_data_1   <   i_data_2 ? 1:0;
                 NOR:
-                o_result = ~(i_data_1 | i_data_2);  
+                result  =   ~(i_data_1 |   i_data_2);
+                XOR:
+                result  =   i_data_1   ^   i_data_2;
+                SLL:
+                result  =   (i_UShamt) ? (i_data_2 << i_shamt) : (i_data_2 << i_data_1);
+                SRL:
+                result  =   (i_UShamt) ? (i_data_2 >> i_shamt) : (i_data_2 >> i_data_1);
+                SRA:
+                result  =   (i_UShamt) ? ($signed(i_data_2) >>> i_shamt) : ($signed(i_data_2) >>> i_data_1);
                 default:
-                o_result = {NB_DATA_OUT{1'b0}};
+                result  =   -1;
             endcase
         end
 
-    assign o_alu_result = o_result;
+    assign o_result =   result;
+    assign o_cero   =   (result==0); //
 
 endmodule

@@ -1,157 +1,134 @@
 `timescale 1ns / 1ps
 
-module top #(
-	parameter 		NB_ADDR 		= 	32,
-	parameter 		NBITS 			= 	32,
-	parameter 		NB_INST   		= 	32,
-    parameter       NB_OPCODE       =   6,
-    parameter       NB_FUNCT        =   6,
-    parameter       NB_REG          =   5,     // Longitud del campo RS,RT,RD
-    parameter       NB_IMMEDIATE    =   16,
-    parameter       NB_DATA         =   32,
-    parameter       SIZE_REG        =   32,
-    parameter       NB_IMMED        =   16,     // Longitud sin signo
-	parameter   	NB_OP         	= 	6,  
-    parameter   	NB_DATA_OUT   	= 	32,
-    parameter   	NB_SELECTOR   	= 	2,       // Longitud del selector
-    parameter       DBIT = 8,
-    parameter       SB_TICK = 16, 		// # ticks for stop bits,
-										// 16/24/32 for 1/1.5/2 bits
-	parameter	    DVSR = 163,			// baud rate divisor
-										// DVSR = 100MHZ/(16 * baud rate)
-    parameter       DVSR_BIT = 8 		// # bits of DVSR
-
-)
-(
-
-	//----------------------------------------------------
-	// IF - INPUT
-	//----------------------------------------------------
-
-	input 		wire 						i_clk,
-	input 		wire 						i_reset,
-    
-   //-------------------
-   //UART INPUT
-    input 	wire 			rx,
-    input   wire            wr_uart,
-   
-	//----------------------------------------------------
-	// ID - INPUT
-	//----------------------------------------------------
-
-    
-	//----------------------------------------------------
-	// EX - INPUT
-	//----------------------------------------------------
-
-	//----------------------------------------------------
-	// WB - INPUT
-	//----------------------------------------------------
-    //input   wire    [NB_INST-1:0]      i_data_mem, NO SE IMPLEMENTO AUN
-
-
-
-	//----------------------------------------------------
-	// IF - OUTPUT
-	//----------------------------------------------------
-
-
-	//----------------------------------------------------
-	// ID - OUTPUT
-	//----------------------------------------------------
-
-
-	//----------------------------------------------------
-	// EX - OUTPUT
-	//----------------------------------------------------
-
-    //-------------------
-    //UART OUTPUT
-    output  wire 	[7:0] 	tx_fifo_out,
-	output 	wire 			 tx,
-    output  wire     [7:0] 	rx_data_out   
-);
-
-
-//--------------------------------------------------------------------------------------
-	// signal declaration
-	reg 	[NB_ADDR - 1:0] 	i_pc=4; //BORRAR, POR AHORA SE HACE ASI
-	wire                        i_write;
-	wire 						i_enable;
-	wire 	[NB_INST - 1:0]     i_instruction;
-	wire 	[NB_ADDR - 1:0]     i_address;
-	wire  [NB_INST-1:0]       		o_instruction;
-	wire [NB_DATA-1:0]               o_data_read_debug;
-	wire  [NB_ADDR-1:0]              o_pc;
-	
-	wire       [7:0]     rx_data;
-	wire 			tick, rx_done_tick, tx_done_tick;
-    wire            empty;
-    wire               done;    
-//--------------------------------------------------------------------------------------
-
-top_mips u_top_mips(
-	.i_clk(i_clk),
-	.i_enable(i_enable),
-	.i_reset(i_reset),
-	.i_pc(i_pc),
-	.i_write(i_write),
-	.i_instruction(i_instruction),
-	.i_address(i_address),
-	//.i_data_mem(i_data_mem), aun no se IMPLEMENTA
-	.o_instruction(o_instruction),
-	.o_pc(o_pc),
-	.o_data_read_debug(o_data_read_debug)
-);
-	mod_m_counter #(.M(DVSR), .N(DVSR_BIT)) baud_gen_unit
-		( .clk(i_clk), .reset(i_reset), .q(), .max_tick(tick));
-
-	uart_rx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_rx_unit
-		( .clk(i_clk), .reset(i_reset), .rx(rx), .s_tick(tick),
-		.rx_done_tick(rx_done_tick), .dout(rx_data));
-
-  	uart_tx #( .DBIT(DBIT), .SB_TICK(SB_TICK)) uart_tx_unit
-		( .clk(i_clk), .reset(i_reset), .tx_start(empty), 
-		.s_tick(tick), .din(tx_fifo_out),
-		.tx_done_tick(tx_done_tick), .tx(tx));	
-
-    
-    make_instruc
+module TOP
     #(
+        parameter NBITS             = 32,
+        parameter DATA_BITS         = 8,
+        parameter REGS              = 5,
+        parameter SIZE_MEM_DATOS    = 16,
+        parameter SIZE_MEM_INSTR    = 256,
+        parameter SIZE_REGISTROS    = 32,
+        parameter CLK_FREQ          = 50000000,
+        parameter BAUD_RATE         = 9600,
+        parameter RX_DIV_SAMP       = 16
     )
-    u_make_instruc
     (
-        .i_clk                (i_clk),              
-        .i_reset              (i_reset),            
-        .entrada        (rx_data),
-        .i_rx_done        (rx_done_tick),
-        .ready_instruc     (i_write),       
-        .o_registro              (i_instruction),
-        .test                    (rx_data_out),
-        .o_address                (i_address),
-        .o_step                   (i_enable)      
+        input   wire                                i_clk    ,
+        input   wire                                i_reset  ,
+        input   wire                                i_uart_rx,
+        output  wire                                o_uart_tx,
+        //output  wire   [DATA_BITS-1:0]       uart_rx_data,
+        output  wire        [3:0]                   o_debug_state  //conozco el estado en el que esta el debug
+    );
+    
+    localparam  MEM_REGS_SIZE  = $clog2(SIZE_REGISTROS);
+    localparam  MEM_INSTR_SIZE = $clog2(SIZE_MEM_INSTR);
+    
+    reg     [NBITS-1:0]                 clk_wiz_count;  //contador de ciclos a enviar
+    wire                                clk_wz;
+    wire    [NBITS-1:0]                 pc;
+    wire    [MEM_REGS_SIZE-1:0]         select_reg_dir; //se incrementa en 1 para que mips manda a la salida el valor de ese reg_file
+    wire    [NBITS-1:0]                 data_reg_file; //valor del reg_file enviado desde mips
+    wire    [NBITS-1:0]                 select_mem_dir;
+    wire    [NBITS-1:0]                 data_mem;
+    wire    [MEM_INSTR_SIZE-1:0]        select_mem_ins_dir;    //lo mandamos pero no lo mostramos en pantalla
+    wire    [NBITS-1:0]                 dato_mem_ins;
+    wire                                write_mem_ins;   //cuando recibi el dato(rx) se pone a 1 para escribir mem instruc
+    wire                                uart_rx_data_ready;
+    wire                                uart_tx_start;
+    wire    [DATA_BITS-1:0]             uart_tx_data;
+    wire                                uart_tx_done;
+    wire                                control_clk_wiz;  //segun el modo o si esta en stop,(1,0) con 1 se incrementa el clock, es control
+    wire                                halt;
+    wire    [DATA_BITS-1:0]             uart_rx_data;
+    wire                                uart_rx_reset;
 
-  );
-  
-      instruc_buffer
-    #(
+   clk_wiz_0 clk_wiz
+   (
+    .clk_out1(clk_wz),     // output clk_out50MHz
+    .reset(i_reset), // input reset
+    .locked(locked),       // output locked
+    .clk_in1(i_clk)
+    );  
+
+    MIPS #(
+        .NBITS          (NBITS),
+        .SIZE_REG       (SIZE_REGISTROS),
+        .SIZE_M         (SIZE_MEM_DATOS),
+        .SIZE_INSTRUC   (SIZE_MEM_INSTR),
+        .REGS           (REGS)
     )
-    u_instruc_buffer
+    u_MIPS
     (
-        .clk                (i_clk),              
-        .reset              (i_reset), 
-        .done                 (done),
-        .wr                  (wr_uart),
-        //.enviar             (ready_instruc),
-        .tx_done_tick       (tx_done_tick),     
-        .entrada             (o_data_read_debug), 
-        .parte                (tx_fifo_out),
-        .empty               (empty),
-        .i_pc                 (o_pc),
-        .i_instruction        (o_instruction)  
+        .i_clk                          (clk_wz),
+        .i_reset                        (i_reset),
+        .i_control_clk_wiz              (control_clk_wiz),
+        .i_select_reg_dir               (select_reg_dir),
+        .i_select_mem_dir               (select_mem_dir),
+        .i_select_mem_ins_dir           (select_mem_ins_dir),
+        .i_dato_mem_ins                 (dato_mem_ins),
+        .i_write_mem_ins                (write_mem_ins),
+        .o_pc                           (pc),
+        .o_data_reg_file                (data_reg_file),
+        .o_data_mem                     (data_mem),
+        .o_mips_halt                    (halt)
+    );
 
-  );
+    UART #(
+        .CLK_FR      (CLK_FREQ),
+        .BAUD_RATE   (BAUD_RATE),
+        .DBIT        (DATA_BITS),
+        .RX_DIV_SAMP (RX_DIV_SAMP)
+        
+    )
+    u_UART(
+        .i_clk                  (clk_wz),
+        .i_reset                (i_reset),
+        .i_rx_reset             (uart_rx_reset),
+        .i_tx_start             (uart_tx_start),
+        .i_uart_rx              (i_uart_rx),
+        .i_tx_data              (uart_tx_data),
+        .o_uart_tx              (o_uart_tx),
+        .o_tx_done              (uart_tx_done),
+        .o_rx_done              (uart_rx_data_ready),
+        .o_rx_data              (uart_rx_data)
+    );
 
+    Debug #(
+        .DATA_BITS  (DATA_BITS),
+        .NBITS      (NBITS)
+    )
+    u_Debug
+    (
+        .i_clk                  (clk_wz),
+        .i_reset                (i_reset),
+        .i_uart_rx_ready        (uart_rx_data_ready),
+        .i_uart_rx_data         (uart_rx_data),
+        .i_uart_tx_done         (uart_tx_done),
+        .i_halt                 (halt),
+        .i_clk_wiz_count        (clk_wiz_count),
+        .i_mips_pc              (pc),
+        .i_data_reg_file        (data_reg_file),
+        .i_data_mem             (data_mem),
+        .o_uart_rx_reset        (uart_rx_reset),
+        .o_uart_tx_data         (uart_tx_data),
+        .o_uart_tx_ready        (uart_tx_start),
+        .o_control_clk_wiz      (control_clk_wiz),
+        .o_select_reg_dir       (select_reg_dir),
+        .o_select_mem_dir       (select_mem_dir),
+        .o_select_mem_ins_dir   (select_mem_ins_dir),
+        .o_dato_mem_ins         (dato_mem_ins),
+        .o_instr_write          (write_mem_ins),
+        .o_debug_state          (o_debug_state)
+     );
+
+    always @(posedge clk_wz)
+        begin
+            if(i_reset) begin
+                clk_wiz_count = 0;
+            end else if (control_clk_wiz) begin
+                clk_wiz_count = clk_wiz_count + 1;
+            end
+        end
 
 endmodule
