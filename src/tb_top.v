@@ -151,7 +151,7 @@ module tb_top();
       uart_rx_data_ready=1'b0;
    //      OPCODE      RS          RT      RD      SHAMT       FUNCT
     //ADD:  000000  |   RS      |   RT  |   RD  |   00000   |   100000
-    //      000000     00001      00010   00100     00000       100000
+    //      000000     00001      00011   00000     00000       100000
   
       #20
       uart_rx_data_ready=1'b1;
@@ -160,11 +160,11 @@ module tb_top();
       uart_rx_data_ready=1'b0;    
       #20
       uart_rx_data_ready=1'b1;
-      uart_rx_data=8'b00100010;
+      uart_rx_data=8'b00100011;
       #60
       uart_rx_data_ready=1'b0;
       #20
-      uart_rx_data=8'b00100000;
+      uart_rx_data=8'b00000000;
       uart_rx_data_ready=1'b1;
       #60
       uart_rx_data_ready=1'b0;
@@ -173,6 +173,53 @@ module tb_top();
       uart_rx_data=8'b00100000;
       #100
       uart_rx_data_ready=1'b0;
+      
+   //      OPCODE      RS          RT      RD      SHAMT       FUNCT
+   // sub  000000     00000      00010   00001     00000       100010   
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00000000;
+      #60
+      uart_rx_data_ready=1'b0;    
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00000010;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data=8'b00001000;
+      uart_rx_data_ready=1'b1;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00100010;
+      #100
+      uart_rx_data_ready=1'b0;
+      
+      //beq   00010000 01000010 00000000 00000011
+  
+        #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00010000;
+      #60
+      uart_rx_data_ready=1'b0;    
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b01000010;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data=8'b00000000;
+      uart_rx_data_ready=1'b1;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00000011;
+      #100
+      uart_rx_data_ready=1'b0;
+  
       #80
       uart_rx_data_ready=1'b1;
       uart_rx_data=8'b11111111;
@@ -198,8 +245,6 @@ module tb_top();
       uart_rx_data=8'b01100011;
       #200
       uart_rx_data_ready=1'b0;
-
-
        
       $finish();
     end
