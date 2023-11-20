@@ -22,9 +22,6 @@ module register_file
     );
     
     reg     [NBITS-1:0]         memory[TAM-1:0];
-    reg     [NBITS-1:0]         rs;
-    reg     [NBITS-1:0]         rt;
-    reg     [NBITS-1:0]         Reg_Debug;
     integer                     i;
     
     initial
