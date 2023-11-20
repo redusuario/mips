@@ -199,7 +199,7 @@ module tb_top();
       
       //beq   00010000 01000010 00000000 00000011
   
-        #20
+      #20
       uart_rx_data_ready=1'b1;
       uart_rx_data=8'b00010000;
       #60
@@ -217,6 +217,29 @@ module tb_top();
       #20
       uart_rx_data_ready=1'b1;
       uart_rx_data=8'b00000011;
+      #100
+      uart_rx_data_ready=1'b0;
+      
+      //jalr $1  00000000 11100000 11111000 00001001
+      
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00000000;
+      #60
+      uart_rx_data_ready=1'b0;    
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b11100000;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data=8'b11111000;
+      uart_rx_data_ready=1'b1;
+      #60
+      uart_rx_data_ready=1'b0;
+      #20
+      uart_rx_data_ready=1'b1;
+      uart_rx_data=8'b00001001;
       #100
       uart_rx_data_ready=1'b0;
   
